@@ -8,9 +8,13 @@ namespace ConccurrencyLab2
 {
     class Program
     {
+        static int MyPortNr;
+
         static void Main(string[] args)
         {
-            //push
+            MyPortNr = int.Parse(args[0]);
+            Console.Title = "NetChange " + MyPortNr;
+            Console.ReadLine();
         }
     }
 }
