@@ -9,8 +9,9 @@ namespace ConccurrencyLab2
     class Program
     {
         public static int MyPortNr;
-        static int[] Neighbours; //array with own neightbours Nbu[v] forwarding table
-        public static Dictionary<int, Connection> routingTable = new Dictionary<int, Connection>();
+        public static List<Node> routingTable = new List<Node>();
+        public static Dictionary<int, Connection> Neighbours = new Dictionary<int, Connection>();
+        public static object _Lock = new object();
 
         static void Main(string[] args)
         {
@@ -18,19 +19,46 @@ namespace ConccurrencyLab2
             MyPortNr = int.Parse(args[0]);
             Console.Title = "NetChange " + MyPortNr;
             new Server(MyPortNr);
-
-            //set connections
-            int NumbNeighbours = args.Length - 1;
-            Neighbours = new int[NumbNeighbours];//////////////////////////////////////////Is neighbour array wel nodig??????
-            for (int i = 0; i < NumbNeighbours; i++)
+            routingTable.Add(new Node(MyPortNr, 0, MyPortNr, null));
+                                    
+            int NumbNeighbors = args.Length - 1;
+            for (int i = 0; i < NumbNeighbors; i++)
             {
                 int PortNeighbour = int.Parse(args[i + 1]);
-                Neighbours[i] = PortNeighbour;
-                //Console.WriteLine(Neighbours[i]);
-                routingTable.Add(PortNeighbour, new Connection(PortNeighbour));
+                lock (_Lock)
+                {
+                    //set connections
+                    Neighbours.Add(PortNeighbour, new Connection(PortNeighbour));
+                }
             }
 
-            HandleInput();
+            PrintRoutingTable();
+
+            SendRoutingTable();
+
+            PrintRoutingTable();
+
+            //HandleInput();
+        }
+
+        static void SendRoutingTable()
+        {
+            if (Neighbours.ContainsKey(1101))
+            {
+                Console.WriteLine("test4321");
+                lock (_Lock)
+                {
+                    Neighbours[1101].Write.WriteLine("test1234");
+                }
+            }
+            //foreach (int Neighbour in Neighbours.Keys) //voor alle connecties
+            //
+            //    foreach (Node N in routingTable)
+            //    {
+            //        Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
+            //        Console.WriteLine(Neighbour + " U " + N.getUpdateString());
+            //    }
+            //}
         }
 
         static void HandleInput()
@@ -47,15 +75,12 @@ namespace ConccurrencyLab2
             }
         }
 
-        static void UpdateRoutingTable()
+        static void PrintRoutingTable()
         {
-
+            foreach (Node N in routingTable)
+            {
+                Console.WriteLine(N.portNr + " " + N.dist + " " + N.lastNode);
+            }
         }
     }
 }
-
-/*
- * Geef buren meteen door wanneer je je eigen poortnummer door geeft
- * update routing tabel. bij routingTable[poort].Update -> update geeft zijn neighbours lijst terug -> dus wanneer verwijderen of toevoegen bij neighbours veranderen
- * updaten voordat je iets doet
- */

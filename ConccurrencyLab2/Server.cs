@@ -31,7 +31,16 @@ namespace ConccurrencyLab2
 
                 int clientPort = int.Parse(clientIn.ReadLine().Split()[1]); //krijgt van connection clientPort binnen.
 
-                Program.routingTable.Add(clientPort, new Connection(clientIn, clientOut));
+                lock (Program._Lock)
+                {
+                    if (!Program.Neighbours.ContainsKey(clientPort))
+                    {
+                        Console.WriteLine(clientPort);
+                        Program.Neighbours.Add(clientPort, new Connection(clientIn, clientOut));
+                    }
+                    else
+                        Console.WriteLine("doet het niet" + clientPort);
+                }
             }
         }
     }
