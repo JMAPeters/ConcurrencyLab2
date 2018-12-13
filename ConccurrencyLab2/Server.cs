@@ -35,11 +35,8 @@ namespace ConccurrencyLab2
                 {
                     if (!Program.Neighbours.ContainsKey(clientPort))
                     {
-                        Console.WriteLine(clientPort);
-                        Program.Neighbours.Add(clientPort, new Connection(clientIn, clientOut));
+                        Program.Neighbours.Add(clientPort, new Connection(clientPort, clientIn, clientOut));
                     }
-                    else
-                        Console.WriteLine("doet het niet" + clientPort);
                 }
             }
         }

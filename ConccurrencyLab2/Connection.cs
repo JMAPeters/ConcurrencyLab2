@@ -12,12 +12,14 @@ namespace ConccurrencyLab2
     class Connection
     {
         public StreamReader Read;
-        public StreamWriter Write; 
+        public StreamWriter Write;
+        public int PortNr;
 
         //Client worden bij een andere server
         public Connection(int port)
         {
             TcpClient client = new TcpClient("localhost", port);
+            PortNr = port;
             Read = new StreamReader(client.GetStream());
             Write = new StreamWriter(client.GetStream());
             //direct sending of message through AutoFlush
@@ -32,8 +34,9 @@ namespace ConccurrencyLab2
 
 
         //Server bent en een client vraag verbinding aan
-        public Connection(StreamReader read, StreamWriter write)
+        public Connection(int port, StreamReader read, StreamWriter write)
         {
+            PortNr = port;
             Read = read;
             Write = write;
 
@@ -47,18 +50,17 @@ namespace ConccurrencyLab2
             {
                 while (true)
                 {
-                    Console.WriteLine(Read.ReadLine());
                     //AANPASSEN: wat je binnen krijgt, kijken wat het is en dan reageren daarop. (soort bericht: bv verbreek verbinding)
 
-                    //string[] input = Read.ReadLine().Split();
-                    //switch (input[0])
-                    //{
-                    //    case "U":
-                    //        {
-                    //            //UpdateRoutingTable(input);
-                    //        }
-                    //        break;
-                    //}
+                    string[] input = Read.ReadLine().Split();
+                    switch (input[0])
+                    {
+                        case "U":
+                            {
+                                UpdateRoutingTable(input);
+                            }
+                            break;
+                    }
                 }
                     
             }
@@ -75,12 +77,17 @@ namespace ConccurrencyLab2
             }
             if (!inRoutingTable)
             {
-                Node newNode = new Node(int.Parse(input[1]), int.Parse(input[2]), int.Parse(input[3]), null);
-                for (int i = 0; i <= int.Parse(input[4]); i++)
+                Node newNode = new Node(int.Parse(input[1]), int.Parse(input[2]) + 1, PortNr, new Dictionary<int, int>()); //client port hops lastNode
+                //if (int.Parse(input[2]) == 0)
+                //    newNode.lastNode = Program.MyPortNr;
+                for (int i = 0; i < int.Parse(input[4]); i++)
                 {
                     newNode.otherRoute.Add(int.Parse(input[4 + (i * 2)]), int.Parse(input[4 + (i * 2) + 1]));
                 }
-                Program.routingTable.Add(newNode);
+                lock (Program._Lock)
+                    Program.routingTable.Add(newNode);
+
+                Program.SendRoutingTable();
             }
         }
     }

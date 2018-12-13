@@ -19,16 +19,19 @@ namespace ConccurrencyLab2
             MyPortNr = int.Parse(args[0]);
             Console.Title = "NetChange " + MyPortNr;
             new Server(MyPortNr);
-            routingTable.Add(new Node(MyPortNr, 0, MyPortNr, null));
+            routingTable.Add(new Node(MyPortNr, 0, MyPortNr, new Dictionary<int, int>()));
                                     
-            int NumbNeighbors = args.Length - 1;
-            for (int i = 0; i < NumbNeighbors; i++)
+            int NumbNeighbours = args.Length - 1;
+            for (int i = 0; i < NumbNeighbours; i++)
             {
                 int PortNeighbour = int.Parse(args[i + 1]);
-                lock (_Lock)
+                if (PortNeighbour > MyPortNr) //connect only with higher portnumbers
                 {
-                    //set connections
-                    Neighbours.Add(PortNeighbour, new Connection(PortNeighbour));
+                    lock (_Lock)
+                    {
+                        //set connections
+                        Neighbours.Add(PortNeighbour, new Connection(PortNeighbour));
+                    }
                 }
             }
 
@@ -36,29 +39,18 @@ namespace ConccurrencyLab2
 
             SendRoutingTable();
 
-            PrintRoutingTable();
-
-            //HandleInput();
+            HandleInput();
         }
 
-        static void SendRoutingTable()
+        public static void SendRoutingTable()
         {
-            if (Neighbours.ContainsKey(1101))
+            foreach (int Neighbour in Neighbours.Keys) //voor alle connecties
             {
-                Console.WriteLine("test4321");
-                lock (_Lock)
+                foreach (Node N in routingTable)
                 {
-                    Neighbours[1101].Write.WriteLine("test1234");
+                    Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
                 }
             }
-            //foreach (int Neighbour in Neighbours.Keys) //voor alle connecties
-            //
-            //    foreach (Node N in routingTable)
-            //    {
-            //        Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
-            //        Console.WriteLine(Neighbour + " U " + N.getUpdateString());
-            //    }
-            //}
         }
 
         static void HandleInput()
@@ -68,18 +60,25 @@ namespace ConccurrencyLab2
                 string input = Console.ReadLine();
                 switch (input.Split()[0])
                 {
-                    case "R":
-                        Console.WriteLine("verstuur sting naar poort");
+                    case "T":
+                        PrintRoutingTable();
                         break;
                 }
             }
         }
 
-        static void PrintRoutingTable()
+        public static void PrintRoutingTable()
         {
-            foreach (Node N in routingTable)
+            Console.WriteLine("-");
+            lock (_Lock)
             {
-                Console.WriteLine(N.portNr + " " + N.dist + " " + N.lastNode);
+                foreach (Node N in routingTable)
+                {
+                    if (N.dist == 0)
+                        Console.WriteLine(N.portNr + " " + N.dist + " local");
+                    else
+                        Console.WriteLine(N.portNr + " " + N.dist + " " + N.lastNode);
+                }
             }
         }
     }
