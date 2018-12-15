@@ -52,14 +52,30 @@ namespace ConccurrencyLab2
                 {
                     //AANPASSEN: wat je binnen krijgt, kijken wat het is en dan reageren daarop. (soort bericht: bv verbreek verbinding)
 
-                    string[] input = Read.ReadLine().Split();
-                    switch (input[0])
+                    string input = Read.ReadLine();
+                    string[] inputArr = input.Split();
+                    
+                    switch (inputArr[0])
                     {
                         case "U":
-                            {
-                                UpdateRoutingTable(input);
+                            { 
+                                UpdateRoutingTable(inputArr);
                             }
                             break;
+                        case "B":
+                            { 
+                                if (int.Parse(inputArr[1]) == Program.MyPortNr)
+                                    Console.WriteLine("Message received:" + input);
+                                //bericht is niet voor deze console, stuur hem verder
+                                else
+                                {
+                                    Console.WriteLine("Test");
+                                    Program.SendMessage(input);
+                                }
+                                
+                            }
+                            break; 
+
                     }
                 }
                     
