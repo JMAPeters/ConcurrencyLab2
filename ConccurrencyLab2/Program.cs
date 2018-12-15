@@ -44,11 +44,14 @@ namespace ConccurrencyLab2
 
         public static void SendRoutingTable()
         {
-            foreach (int Neighbour in Neighbours.Keys) //voor alle connecties
+            lock (_Lock)
             {
-                foreach (Node N in routingTable)
+                foreach (int Neighbour in Neighbours.Keys) //voor alle connecties
                 {
-                    Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
+                    foreach (Node N in routingTable)
+                    {
+                        Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
+                    }
                 }
             }
         }
@@ -60,7 +63,7 @@ namespace ConccurrencyLab2
                 string input = Console.ReadLine();
                 switch (input.Split()[0])
                 {
-                    case "T":
+                    case "R":
                         PrintRoutingTable();
                         break;
                 }
@@ -77,7 +80,12 @@ namespace ConccurrencyLab2
                     if (N.dist == 0)
                         Console.WriteLine(N.portNr + " " + N.dist + " local");
                     else
-                        Console.WriteLine(N.portNr + " " + N.dist + " " + N.lastNode);
+                    {
+                        string info = N.portNr + " " + N.dist + " " + N.lastNode + " other route: ";
+                        foreach (KeyValuePair<int, int> route in N.otherRoute)
+                            info += route.Key + " " + route.Value + " "; 
+                        Console.WriteLine(info);
+                    }
                 }
             }
         }

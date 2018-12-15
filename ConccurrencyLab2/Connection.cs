@@ -70,20 +70,36 @@ namespace ConccurrencyLab2
         public void UpdateRoutingTable(string[] input)
         {
             bool inRoutingTable = false;
+            int port = int.Parse(input[1]);
+            int dist = int.Parse(input[2]) + 1;
+            int lastNode = int.Parse(input[3]);
+
             foreach (Node N in Program.routingTable)
             {
-                if (N.portNr == int.Parse(input[1]))
+                if (N.portNr == port)
+                {
+                    if (N.dist < dist)
+                    {
+                        N.otherRoute.Add(dist, PortNr);
+                        Console.WriteLine(dist + " " + PortNr);
+                    }
+                    else
+                    {
+                        N.otherRoute.Add(N.dist, N.lastNode);
+                        N.dist = dist;
+                        N.lastNode = PortNr;
+                    }
+
                     inRoutingTable = true;
+                }
             }
             if (!inRoutingTable)
             {
-                Node newNode = new Node(int.Parse(input[1]), int.Parse(input[2]) + 1, PortNr, new Dictionary<int, int>()); //client port hops lastNode
-                //if (int.Parse(input[2]) == 0)
-                //    newNode.lastNode = Program.MyPortNr;
-                for (int i = 0; i < int.Parse(input[4]); i++)
-                {
-                    newNode.otherRoute.Add(int.Parse(input[4 + (i * 2)]), int.Parse(input[4 + (i * 2) + 1]));
-                }
+                Node newNode = new Node(port, dist + 1, PortNr, new Dictionary<int, int>()); //client port hops lastNode
+                //for (int i = 0; i < int.Parse(input[4]); i++)
+                //{
+                //    newNode.otherRoute.Add(int.Parse(input[4 + (i * 2)]), int.Parse(input[4 + (i * 2) + 1]));
+                //}
                 lock (Program._Lock)
                     Program.routingTable.Add(newNode);
 
