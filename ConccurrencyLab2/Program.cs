@@ -10,7 +10,7 @@ namespace ConccurrencyLab2
     {
         public static int MyPortNr;
         public static List<Node> routingTable = new List<Node>();
-        public static Dictionary<int, Connection> Neighbours = new Dictionary<int, Connection>();
+        public static Dictionary<int, Connection> Neighbours = new Dictionary<int, Connection>(); //
         public static object _Lock = new object();
 
         static void Main(string[] args)
@@ -66,6 +66,9 @@ namespace ConccurrencyLab2
                     case "R":
                         PrintRoutingTable();
                         break;
+                    case "B":
+                        SendMessage(input);
+                        break; 
                 }
             }
         }
@@ -88,6 +91,28 @@ namespace ConccurrencyLab2
                     }
                 }
             }
+        }
+
+        public static void SendMessage(string input)
+        {
+            bool isFound = false;
+            int Portnumber = int.Parse(input.Split()[1]);
+            
+            foreach (Node N in Program.routingTable)
+            {
+                //als waar, bestaat er dus een portnumber waar je je bericht heen kan sturen
+                if (N.portNr == Portnumber)
+                {
+                    Console.WriteLine(N.portNr + " " + Portnumber); 
+                    //In de neighbors lijst wil je zoeken naar de juiste neighbour, en die moet het weer doorsturen naar de betreffende node
+                    Neighbours[N.lastNode].Write.WriteLine(input);
+                    isFound = true;  
+                }
+
+            }
+            if (!isFound)
+                Console.WriteLine("Portnumber does not exist! xoxo groetjes"); 
+
         }
     }
 }
