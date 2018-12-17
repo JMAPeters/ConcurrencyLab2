@@ -26,17 +26,7 @@ namespace ConccurrencyLab2
 
         public string getUpdateString()
         {
-            UpdateString = portNr + " " + dist + " " + lastNode + " ";
-            if (otherRoute != null)
-            {
-                UpdateString += otherRoute.Count;
-                foreach (KeyValuePair<int, int> route in otherRoute)
-                {
-                    UpdateString += route.Key + " " + route.Value + " ";
-                }
-            }
-            else
-                UpdateString += "0";
+            UpdateString = portNr + " " + dist;
             return UpdateString;
         }
     }

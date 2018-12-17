@@ -10,7 +10,7 @@ namespace ConccurrencyLab2
     {
         public static int MyPortNr;
         public static List<Node> routingTable = new List<Node>();
-        public static Dictionary<int, Connection> Neighbours = new Dictionary<int, Connection>(); //
+        public static Dictionary<int, Connection> Neighbours = new Dictionary<int, Connection>();
         public static object _Lock = new object();
 
         static void Main(string[] args)
@@ -20,7 +20,8 @@ namespace ConccurrencyLab2
             Console.Title = "NetChange " + MyPortNr;
             new Server(MyPortNr);
             routingTable.Add(new Node(MyPortNr, 0, MyPortNr, new Dictionary<int, int>()));
-                                    
+            PrintRoutingTable();
+
             int NumbNeighbours = args.Length - 1;
             for (int i = 0; i < NumbNeighbours; i++)
             {
@@ -35,7 +36,10 @@ namespace ConccurrencyLab2
                 }
             }
 
-            PrintRoutingTable();
+            while (Neighbours.Count < 2)
+            {
+                //bussy wait till all Neighbours are connected
+            }
 
             SendRoutingTable();
 
@@ -51,6 +55,7 @@ namespace ConccurrencyLab2
                     foreach (Node N in routingTable)
                     {
                         Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
+                        //Console.WriteLine("sendform: " + MyPortNr + " string: " + N.getUpdateString() + " to: " + Neighbour);
                     }
                 }
             }
@@ -68,13 +73,17 @@ namespace ConccurrencyLab2
                         break;
                     case "B":
                         SendMessage(input);
-                        break; 
+                        break;
                 }
             }
         }
 
         public static void PrintRoutingTable()
         {
+            foreach (KeyValuePair<int, Connection> N in Neighbours)
+            {
+                Console.WriteLine(N.Key);
+            }
             Console.WriteLine("-");
             lock (_Lock)
             {
@@ -86,7 +95,7 @@ namespace ConccurrencyLab2
                     {
                         string info = N.portNr + " " + N.dist + " " + N.lastNode + " other route: ";
                         foreach (KeyValuePair<int, int> route in N.otherRoute)
-                            info += route.Key + " " + route.Value + " "; 
+                            info += route.Key + " " + route.Value + " ";
                         Console.WriteLine(info);
                     }
                 }
@@ -97,22 +106,20 @@ namespace ConccurrencyLab2
         {
             bool isFound = false;
             int Portnumber = int.Parse(input.Split()[1]);
-            
-            foreach (Node N in Program.routingTable)
+
+            foreach (Node N in routingTable)
             {
                 //als waar, bestaat er dus een portnumber waar je je bericht heen kan sturen
                 if (N.portNr == Portnumber)
                 {
-                    Console.WriteLine(N.portNr + " " + Portnumber); 
                     //In de neighbors lijst wil je zoeken naar de juiste neighbour, en die moet het weer doorsturen naar de betreffende node
+                    Console.WriteLine(N.lastNode);/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     Neighbours[N.lastNode].Write.WriteLine(input);
-                    isFound = true;  
+                    isFound = true;
                 }
-
             }
             if (!isFound)
-                Console.WriteLine("Portnumber does not exist! xoxo groetjes"); 
-
+                Console.WriteLine("Portnumber does not exist!");
         }
     }
 }

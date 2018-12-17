@@ -29,7 +29,7 @@ namespace ConccurrencyLab2
             Write.WriteLine("Port: " + Program.MyPortNr);
 
             //Constante state of reading 
-            new Thread(ThreadReader).Start(); 
+            new Thread(ThreadReader).Start();
         }
 
 
@@ -50,76 +50,79 @@ namespace ConccurrencyLab2
             {
                 while (true)
                 {
-                    //AANPASSEN: wat je binnen krijgt, kijken wat het is en dan reageren daarop. (soort bericht: bv verbreek verbinding)
-
                     string input = Read.ReadLine();
                     string[] inputArr = input.Split();
-                    
+
                     switch (inputArr[0])
                     {
                         case "U":
-                            { 
+                            {
                                 UpdateRoutingTable(inputArr);
                             }
                             break;
                         case "B":
-                            { 
+                            {
                                 if (int.Parse(inputArr[1]) == Program.MyPortNr)
-                                    Console.WriteLine("Message received:" + input);
-                                //bericht is niet voor deze console, stuur hem verder
-                                else
                                 {
-                                    Console.WriteLine("Test");
-                                    Program.SendMessage(input);
+                                    //Write message in console
+                                    string[] message = input.Split(new char[] { ' ' }, 3);
+                                    Console.WriteLine(message[2]);
                                 }
-                                
+                                else
+                                    //bericht is niet voor deze console, stuur hem verder
+                                    Program.SendMessage(input);
                             }
-                            break; 
-
+                            break;
                     }
                 }
-                    
             }
             catch { }
         }
 
         public void UpdateRoutingTable(string[] input)
         {
-            bool inRoutingTable = false;
-            int port = int.Parse(input[1]);
-            int dist = int.Parse(input[2]) + 1;
-            int lastNode = int.Parse(input[3]);
-
-            foreach (Node N in Program.routingTable)
+            lock (Program._Lock)
             {
-                if (N.portNr == port)
+                int portNr = int.Parse(input[1]);
+                int dist = int.Parse(input[2]) + 1;
+                bool inRoutingTable = false;
+
+                //Check if the node is already in the routingtable
+                foreach (Node node in Program.routingTable)
                 {
-                    if (N.dist < dist)
+                    if (node.portNr == portNr)
                     {
-                        N.otherRoute.Add(dist, PortNr);
-                        Console.WriteLine(dist + " " + PortNr);
+                        if (dist < node.dist)
+                        {
+                            node.otherRoute.Add(node.lastNode, node.dist);
+                            node.dist = dist;
+                            node.lastNode = PortNr;
+                            Program.SendRoutingTable();
+                        }
+                        else
+                        {
+                            if (PortNr != node.lastNode && portNr != Program.MyPortNr)
+                            {
+                                //check if there is already an other route via this node, if so if this route is shorter change de dist
+                                if (!node.otherRoute.ContainsKey(PortNr))
+                                    node.otherRoute.Add(PortNr, dist);
+                                else
+                                {
+                                    if (node.otherRoute[PortNr] > dist)
+                                        node.otherRoute[PortNr] = dist;
+                                }
+                            }
+                        }
+                        inRoutingTable = true;
                     }
-                    else
-                    {
-                        N.otherRoute.Add(N.dist, N.lastNode);
-                        N.dist = dist;
-                        N.lastNode = PortNr;
-                    }
-
-                    inRoutingTable = true;
                 }
-            }
-            if (!inRoutingTable)
-            {
-                Node newNode = new Node(port, dist + 1, PortNr, new Dictionary<int, int>()); //client port hops lastNode
-                //for (int i = 0; i < int.Parse(input[4]); i++)
-                //{
-                //    newNode.otherRoute.Add(int.Parse(input[4 + (i * 2)]), int.Parse(input[4 + (i * 2) + 1]));
-                //}
-                lock (Program._Lock)
+                //if its not in the routingtable
+                if (!inRoutingTable)
+                {
+                    Node newNode = new Node(portNr, dist, PortNr, new Dictionary<int, int>());
                     Program.routingTable.Add(newNode);
-
-                Program.SendRoutingTable();
+                    Program.SendRoutingTable();
+                }
             }
         }
     }
