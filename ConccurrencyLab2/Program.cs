@@ -36,10 +36,10 @@ namespace ConccurrencyLab2
                 }
             }
 
-            while (Neighbours.Count < 2)
-            {
+            //while (Neighbours.Count < 2)
+            //{
                 //bussy wait till all Neighbours are connected
-            }
+            //}
 
             SendRoutingTable();
 
@@ -55,7 +55,6 @@ namespace ConccurrencyLab2
                     foreach (Node N in routingTable)
                     {
                         Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
-                        //Console.WriteLine("sendform: " + MyPortNr + " string: " + N.getUpdateString() + " to: " + Neighbour);
                     }
                 }
             }
@@ -80,11 +79,12 @@ namespace ConccurrencyLab2
 
         public static void PrintRoutingTable()
         {
+            //Print neighbours
             foreach (KeyValuePair<int, Connection> N in Neighbours)
             {
-                Console.WriteLine(N.Key);
+                Console.WriteLine("Neighbour: " + N.Key);
             }
-            Console.WriteLine("-");
+            //Print routingtable
             lock (_Lock)
             {
                 foreach (Node N in routingTable)
@@ -113,7 +113,6 @@ namespace ConccurrencyLab2
                 if (N.portNr == Portnumber)
                 {
                     //In de neighbors lijst wil je zoeken naar de juiste neighbour, en die moet het weer doorsturen naar de betreffende node
-                    Console.WriteLine(N.lastNode);/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     Neighbours[N.lastNode].Write.WriteLine(input);
                     isFound = true;
                 }
