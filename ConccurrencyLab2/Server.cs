@@ -38,6 +38,7 @@ namespace ConccurrencyLab2
                         Program.Neighbours.Add(clientPort, new Connection(clientPort, clientIn, clientOut));
                     }
                 }
+                Console.WriteLine("Verbonden: {0}", clientPort);
             }
         }
     }

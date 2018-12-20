@@ -20,7 +20,6 @@ namespace ConccurrencyLab2
             Console.Title = "NetChange " + MyPortNr;
             new Server(MyPortNr);
             routingTable.Add(new Node(MyPortNr, 0, MyPortNr, new Dictionary<int, int>()));
-            PrintRoutingTable();
 
             int NumbNeighbours = args.Length - 1;
             for (int i = 0; i < NumbNeighbours; i++)
@@ -33,13 +32,9 @@ namespace ConccurrencyLab2
                         //set connections
                         Neighbours.Add(PortNeighbour, new Connection(PortNeighbour));
                     }
+                    Console.WriteLine("Verbonden: {0}", PortNeighbour);
                 }
             }
-
-            //while (Neighbours.Count < 2)
-            //{
-                //bussy wait till all Neighbours are connected
-            //}
 
             SendRoutingTable();
 
@@ -73,31 +68,9 @@ namespace ConccurrencyLab2
                     case "B":
                         SendMessage(input);
                         break;
-                }
-            }
-        }
-
-        public static void PrintRoutingTable()
-        {
-            //Print neighbours
-            foreach (KeyValuePair<int, Connection> N in Neighbours)
-            {
-                Console.WriteLine("Neighbour: " + N.Key);
-            }
-            //Print routingtable
-            lock (_Lock)
-            {
-                foreach (Node N in routingTable)
-                {
-                    if (N.dist == 0)
-                        Console.WriteLine(N.portNr + " " + N.dist + " local");
-                    else
-                    {
-                        string info = N.portNr + " " + N.dist + " " + N.lastNode + " other route: ";
-                        foreach (KeyValuePair<int, int> route in N.otherRoute)
-                            info += route.Key + " " + route.Value + " ";
-                        Console.WriteLine(info);
-                    }
+                    case "C":
+                        NewConnection(input);
+                        break;
                 }
             }
         }
@@ -115,10 +88,58 @@ namespace ConccurrencyLab2
                     //In de neighbors lijst wil je zoeken naar de juiste neighbour, en die moet het weer doorsturen naar de betreffende node
                     Neighbours[N.lastNode].Write.WriteLine(input);
                     isFound = true;
+                    Console.WriteLine("Bericht voor {0} doorgestuurd naar {1}", Portnumber, N.lastNode);
                 }
             }
             if (!isFound)
-                Console.WriteLine("Portnumber does not exist!");
+                Console.WriteLine("Poort {0} is niet bekend", Portnumber);
+        }
+
+        public static void NewConnection(string input)
+        {
+            int portNr = int.Parse(input.Split()[1]);
+            bool isNeighbour = false;
+
+            foreach (int Neighbour in Neighbours.Keys)
+            {
+                if (portNr == Neighbour)
+                {
+                    isNeighbour = true;
+                }
+
+            }
+
+            if (!isNeighbour)
+            {
+                lock (_Lock)
+                {
+                    //set connections
+                    //Neighbours.Add(portNr, new Connection(portNr)); DIT WERKT NOG NIET
+                }
+                Console.WriteLine("Verbonden: {0}", portNr);
+                //SendRoutingTable();
+            }
+            else
+                Console.WriteLine("Poort {0} bestaat al", portNr);
+        }
+
+        public static void PrintRoutingTable()
+        {
+            lock (_Lock)
+            {
+                foreach (Node N in routingTable)
+                {
+                    if (N.dist == 0)
+                        Console.WriteLine(N.portNr + " " + N.dist + " local");
+                    else
+                    {
+                        string info = N.portNr + " " + N.dist + " " + N.lastNode + " other route: ";
+                        foreach (KeyValuePair<int, int> route in N.otherRoute)
+                            info += route.Key + " " + route.Value + " ";
+                        Console.WriteLine(info);
+                    }
+                }
+            }
         }
     }
 }

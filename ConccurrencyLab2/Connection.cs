@@ -69,8 +69,11 @@ namespace ConccurrencyLab2
                                     Console.WriteLine(message[2]);
                                 }
                                 else
+                                {
                                     //bericht is niet voor deze console, stuur hem verder
+
                                     Program.SendMessage(input);
+                                }
                             }
                             break;
                     }
@@ -97,6 +100,7 @@ namespace ConccurrencyLab2
                             node.otherRoute.Add(node.lastNode, node.dist);
                             node.dist = dist;
                             node.lastNode = PortNr;
+                            Console.WriteLine("Afstand naar {0} is nu {1} via {2}", node.portNr, node.dist, node.lastNode);
                             Program.SendRoutingTable();
                         }
                         else
@@ -121,6 +125,7 @@ namespace ConccurrencyLab2
                 {
                     Node newNode = new Node(portNr, dist, PortNr, new Dictionary<int, int>());
                     Program.routingTable.Add(newNode);
+                    Console.WriteLine("Afstand naar {0} is nu {1} via {2}", newNode.portNr, newNode.dist, newNode.lastNode);
                     Program.SendRoutingTable();
                 }
             }
