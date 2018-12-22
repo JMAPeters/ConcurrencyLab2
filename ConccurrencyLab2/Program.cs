@@ -4,6 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/*
+ * Programma runt correct wanneer het zelf gedraaid word vanuit de system.bat
+ * Het is alleen onstabiel wanneer het in tomjudge word gedraait, de ene keer runt die wel goed de andere keer niet
+ * sturen van routingtable werkt,
+ * bericht sturen werkt,
+ * niewe connectie maken werkt,
+ * disconnect werkt behalve,
+ * Netwerkt partities is niet correct gelukt
+ */
+
+
 namespace ConccurrencyLab2
 {
     class Program
@@ -76,7 +87,7 @@ namespace ConccurrencyLab2
                         NewConnection(input);
                         break;
                     case "D":
-                        //Disconnect(input);
+                        Disconnect(input);
                         break;
                 }
             }
@@ -118,7 +129,7 @@ namespace ConccurrencyLab2
                     Console.WriteLine("Verbonden: {0}", portNr);
                 }
                 else
-                    Console.WriteLine("Poort {0} bestaat al", portNr);
+                    Console.WriteLine("Poort {0} is niet bekend", portNr);
             }
             SendRoutingTable();
         }
@@ -140,6 +151,8 @@ namespace ConccurrencyLab2
                     Neighbours.Remove(PortNumber);
                     Console.WriteLine("Verbroken: {0}", PortNumber);
                 }
+                else
+                    Console.WriteLine("Poort {0} is niet bekend", PortNumber);
             }
 
             lock (_LockTable)
@@ -195,7 +208,6 @@ namespace ConccurrencyLab2
                 }
             }
         }
-
 
         public static void PrintRoutingTable()
         {
