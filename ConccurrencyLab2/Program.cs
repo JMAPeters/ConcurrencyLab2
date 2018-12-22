@@ -12,6 +12,7 @@ namespace ConccurrencyLab2
         public static List<Node> routingTable = new List<Node>();
         public static Dictionary<int, Connection> Neighbours = new Dictionary<int, Connection>();
         public static object _Lock = new object();
+        public static object _LockTable = new object();
 
         static void Main(string[] args)
         {
@@ -47,9 +48,12 @@ namespace ConccurrencyLab2
             {
                 foreach (int Neighbour in Neighbours.Keys) //voor alle connecties
                 {
-                    foreach (Node N in routingTable)
+                    lock (_LockTable)
                     {
-                        Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
+                        foreach (Node N in routingTable)
+                        {
+                            Neighbours[Neighbour].Write.WriteLine("U " + N.getUpdateString());
+                        }
                     }
                 }
             }
@@ -71,61 +75,131 @@ namespace ConccurrencyLab2
                     case "C":
                         NewConnection(input);
                         break;
+                    case "D":
+                        //Disconnect(input);
+                        break;
                 }
             }
         }
 
         public static void SendMessage(string input)
         {
+            //lock (_LockTable)
+            {
             bool isFound = false;
             int Portnumber = int.Parse(input.Split()[1]);
 
-            foreach (Node N in routingTable)
-            {
-                //als waar, bestaat er dus een portnumber waar je je bericht heen kan sturen
-                if (N.portNr == Portnumber)
+                foreach (Node N in routingTable)
                 {
-                    //In de neighbors lijst wil je zoeken naar de juiste neighbour, en die moet het weer doorsturen naar de betreffende node
-                    Neighbours[N.lastNode].Write.WriteLine(input);
-                    isFound = true;
-                    Console.WriteLine("Bericht voor {0} doorgestuurd naar {1}", Portnumber, N.lastNode);
+                    //als waar, bestaat er dus een portnumber waar je je bericht heen kan sturen
+                    if (N.portNr == Portnumber)
+                    {
+                        //In de neighbors lijst wil je zoeken naar de juiste neighbour, en die moet het weer doorsturen naar de betreffende node
+                        Neighbours[N.lastNode].Write.WriteLine(input);
+                        isFound = true;
+                        Console.WriteLine("Bericht voor {0} doorgestuurd naar {1}", Portnumber, N.lastNode);
+                    }
                 }
+                if (!isFound)
+                    Console.WriteLine("Poort {0} is niet bekend", Portnumber);
             }
-            if (!isFound)
-                Console.WriteLine("Poort {0} is niet bekend", Portnumber);
         }
 
         public static void NewConnection(string input)
         {
-            int portNr = int.Parse(input.Split()[1]);
-            bool isNeighbour = false;
-
-            foreach (int Neighbour in Neighbours.Keys)
+            lock (_Lock)
             {
-                if (portNr == Neighbour)
-                {
-                    isNeighbour = true;
-                }
+                int portNr = int.Parse(input.Split()[1]);
 
-            }
-
-            if (!isNeighbour)
-            {
-                lock (_Lock)
+                if (!Neighbours.ContainsKey(portNr))
                 {
                     //set connections
-                    //Neighbours.Add(portNr, new Connection(portNr)); DIT WERKT NOG NIET
+                    Neighbours.Add(portNr, new Connection(portNr)); //DIT WERKT NOG NIET
+                    Console.WriteLine("Verbonden: {0}", portNr);
                 }
-                Console.WriteLine("Verbonden: {0}", portNr);
-                //SendRoutingTable();
+                else
+                    Console.WriteLine("Poort {0} bestaat al", portNr);
             }
-            else
-                Console.WriteLine("Poort {0} bestaat al", portNr);
+            SendRoutingTable();
         }
+
+        public static void Disconnect(string input)
+        {
+            lock (_Lock)
+            {
+                int PortNumber = int.Parse(input.Split()[1]);
+                //Je wil eerst checken of je een connectie hebt met de betreffende node.
+                if (Neighbours.ContainsKey(PortNumber))
+                {
+                    ////eerst bericht naar alle buren dat we iemand er uit gaan FLIKKEREN
+                    foreach (int Neighbour in Neighbours.Keys)
+                    {
+                        Neighbours[Neighbour].Write.WriteLine(input);
+                    }
+                    //Flikker de node uit je Neigbourslist
+                    Neighbours.Remove(PortNumber);
+                    Console.WriteLine("Verbroken: {0}", PortNumber);
+                }
+            }
+
+            lock (_LockTable)
+            {
+                int PortNumber = int.Parse(input.Split()[1]);
+                if (!Neighbours.ContainsKey(PortNumber))
+                {
+                    //Als ie niet in je neigbourslist zit wil je gaan herberekenen.
+                    //stuur naar je eigen neigbours dat papi node de aarde heeft verlaten.
+
+                    // als die er nog in zit -> nog maken
+                    //dan verwijderen en bericht doorsturen
+                    foreach (int Neighbour in Neighbours.Keys)
+                    {
+                        Neighbours[Neighbour].Write.WriteLine(input);
+                    }
+                    //Ook verwijderen uit je routingTable, kijk voor elke node.portnumber of is gelijk is met je te verwijderen port number
+                    //lock (_LockTable)
+                    {
+                        foreach (Node node in routingTable)
+                        {
+                            if (node.portNr == PortNumber)
+                            {
+
+                                routingTable.Remove(node);
+                            }
+
+                            //om verwijderde node uit otherroutes in routingtable te verwijderen
+                            if (node.otherRoute.ContainsKey(PortNumber))
+                            {
+                                Console.WriteLine("verwijderd uit otherroutes");
+                                node.otherRoute.Remove(PortNumber);
+                            }
+
+                            if (node.lastNode == PortNumber)
+                            {
+                                int dist = 21;
+                                int lastNode = 0;
+                                foreach (KeyValuePair<int, int> route in node.otherRoute)
+                                {
+                                    if (route.Value < dist)
+                                    {
+                                        dist = route.Value;
+                                        lastNode = route.Key;
+                                    }
+                                }
+                                Console.WriteLine("{0} {1}", dist, lastNode);
+                                node.dist = dist;
+                                node.lastNode = lastNode;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
 
         public static void PrintRoutingTable()
         {
-            lock (_Lock)
+            lock (_LockTable)
             {
                 foreach (Node N in routingTable)
                 {

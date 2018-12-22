@@ -14,6 +14,7 @@ namespace ConccurrencyLab2
         public StreamReader Read;
         public StreamWriter Write;
         public int PortNr;
+        public object _Lock = new object();
 
         //Client worden bij een andere server
         public Connection(int port)
@@ -76,6 +77,9 @@ namespace ConccurrencyLab2
                                 }
                             }
                             break;
+                        case "D":
+                            Program.Disconnect(input); 
+                            break;
                     }
                 }
             }
@@ -84,50 +88,68 @@ namespace ConccurrencyLab2
 
         public void UpdateRoutingTable(string[] input)
         {
-            lock (Program._Lock)
+            //lock (_Lock)
             {
-                int portNr = int.Parse(input[1]);
-                int dist = int.Parse(input[2]) + 1;
-                bool inRoutingTable = false;
-
-                //Check if the node is already in the routingtable
-                foreach (Node node in Program.routingTable)
+                bool changed = false;
+                lock (Program._LockTable)
                 {
-                    if (node.portNr == portNr)
+                    int portNr = int.Parse(input[1]);
+                    int dist = int.Parse(input[2]) + 1;
+                    bool inRoutingTable = false;
+
+
+                    //Check if the node is already in the routingtable
+                    foreach (Node node in Program.routingTable)
                     {
-                        if (dist < node.dist)
+                        if (node.portNr == portNr)
                         {
-                            node.otherRoute.Add(node.lastNode, node.dist);
-                            node.dist = dist;
-                            node.lastNode = PortNr;
-                            Console.WriteLine("Afstand naar {0} is nu {1} via {2}", node.portNr, node.dist, node.lastNode);
-                            Program.SendRoutingTable();
-                        }
-                        else
-                        {
-                            if (PortNr != node.lastNode && portNr != Program.MyPortNr)
+                            if (dist < node.dist)
                             {
-                                //check if there is already an other route via this node, if so if this route is shorter change de dist
-                                if (!node.otherRoute.ContainsKey(PortNr))
-                                    node.otherRoute.Add(PortNr, dist);
-                                else
+                                node.otherRoute.Add(node.lastNode, node.dist);
+                                node.dist = dist;
+                                node.lastNode = PortNr;
+                                Console.WriteLine("Afstand naar {0} is nu {1} via {2}", node.portNr, node.dist, node.lastNode);
+                                //Program.SendRoutingTable();
+                                changed = true;
+                            }
+                            else
+                            {
+                                if (PortNr != node.lastNode && portNr != Program.MyPortNr)
                                 {
-                                    if (node.otherRoute[PortNr] > dist)
-                                        node.otherRoute[PortNr] = dist;
+                                    //check if there is already an other route via this node, if so if this route is shorter change de dist
+                                    if (!node.otherRoute.ContainsKey(PortNr))
+                                    {
+
+                                        node.otherRoute.Add(PortNr, dist);
+                                        //Program.SendRoutingTable();
+                                        changed = true;
+                                    }
+                                    else
+                                    {
+                                        if (node.otherRoute[PortNr] > dist)
+                                        {
+                                            node.otherRoute[PortNr] = dist;
+                                            //Program.SendRoutingTable();
+                                            changed = true;
+                                        }
+                                    }
                                 }
                             }
+                            inRoutingTable = true;
                         }
-                        inRoutingTable = true;
+                    }
+                    //if its not in the routingtable
+                    if (!inRoutingTable)
+                    {
+                        Node newNode = new Node(portNr, dist, PortNr, new Dictionary<int, int>());
+                        Program.routingTable.Add(newNode);
+                        Console.WriteLine("Afstand naar {0} is nu {1} via {2}", newNode.portNr, newNode.dist, newNode.lastNode);
+                        //Program.SendRoutingTable();
+                        changed = true;
                     }
                 }
-                //if its not in the routingtable
-                if (!inRoutingTable)
-                {
-                    Node newNode = new Node(portNr, dist, PortNr, new Dictionary<int, int>());
-                    Program.routingTable.Add(newNode);
-                    Console.WriteLine("Afstand naar {0} is nu {1} via {2}", newNode.portNr, newNode.dist, newNode.lastNode);
+                if (changed)
                     Program.SendRoutingTable();
-                }
             }
         }
     }
