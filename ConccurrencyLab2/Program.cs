@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 
 /*
  * Programma runt correct wanneer het zelf gedraaid word vanuit de system.bat
- * Het is alleen onstabiel wanneer het in tomjudge word gedraait, de ene keer runt die wel goed de andere keer niet
  * sturen van routingtable werkt,
  * bericht sturen werkt,
  * niewe connectie maken werkt,
  * disconnect werkt behalve,
- * Netwerkt partities is niet correct gelukt
+ * Netwerkt partities is niet correct gelukt.
+ * Het is alleen onstabiel wanneer het in tomjudge word gedraait, de ene keer runt die wel goed de andere keer niet
+ * Dit ligt waarschijnlijk aan de locks. 
+ * Er is heel veel getest met het zetten van locks echter resulteerde dit nooit in een stabiele build. 
+ * Deze versie is de meest stabiele build
  */
 
 
